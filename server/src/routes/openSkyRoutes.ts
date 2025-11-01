@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { openSkyAuth, getOpenSkyAuthHealth } from '../middlewares/authMiddleware';
-import { getOpenSkyStates } from '../controllers/openSkyController';
+import { getOpenSkyStates, getOpenSkyFlightsByAircraft, getProcessedFlights } from '../controllers/openSkyController';
 
 const router = Router();
 
@@ -13,7 +13,11 @@ router.get('/health', (req, res) => {
 // Apply OpenSky authentication to all subsequent routes
 router.use(openSkyAuth);
 
-// Protected OpenSky API routes
+// REST API endpoints for testing
 router.get('/states', getOpenSkyStates);
+router.get('/flights/aircraft', getOpenSkyFlightsByAircraft);
+
+//returns processed data like the real-time service
+router.get('/flights', getProcessedFlights);
 
 export default router;
