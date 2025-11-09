@@ -1,9 +1,16 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  moduleFileExtensions: ['ts', 'js'],
-  testMatch: ['**/tests/**/*.test.(ts|js)'],
+  roots: ['<rootDir>/src', '<rootDir>/tests'],
+  testMatch: ['**/tests/**/*.test.ts', '**/tests/**/*.test.js'],
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', { /* ts-jest config goes here in Jest */ }],
+    '^.+\\.ts$': 'ts-jest',
   },
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.d.ts',
+  ],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
+  testTimeout: 10000,
 };
