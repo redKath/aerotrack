@@ -4,23 +4,14 @@
   "description": "AeroTrack Flight Data Server",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "node build.js",
+    "build:tsc": "tsc",
     "start": "node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "test": "jest --config jest.config.js",
-    "test:watch": "jest --watch --config jest.config.js",
-    "test:coverage": "jest --coverage --config jest.config.js",
-    "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix",
-    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "clean": "rimraf dist"
   },
-  "keywords": [
-    "flight",
-    "tracking",
-    "aviation",
-    "opensky"
-  ],
+  "keywords": ["flight", "tracking", "aviation", "opensky"],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -34,17 +25,13 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
-    "@types/jest": "^29.5.14",
     "@types/node": "^22.9.4",
-    "@types/supertest": "^6.0.3",
-    "eslint": "^9.14.0",
-    "jest": "^29.7.0",
-    "prettier": "^3.3.3",
-    "reflect-metadata": "^0.2.2",
-    "rimraf": "^6.1.0",
-    "supertest": "^7.1.4",
-    "ts-jest": "^29.2.5",
+    "typescript": "^5.6.3",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.6.3"
+    "rimraf": "^6.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   }
 }
