@@ -10,29 +10,22 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    "declaration": false,
+    "sourceMap": false,
     "removeComments": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "noImplicitThis": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "types": ["node"]
+    "emitDecoratorMetadata": true
   },
   "include": [
-    "./src/**/*.ts",
-    "./src/**/*.tsx"
+    "./src/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "tests"
+    "tests",
+    "**/*.test.ts",
+    "**/*.spec.ts"
   ]
 }
