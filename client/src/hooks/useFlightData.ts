@@ -9,9 +9,9 @@ export interface FlightStats {
   isConnected: boolean;
 }
 
-// Debounce utility
+// Debounce utility - fix the timeout type
 const debounce = <T extends (...args: any[]) => void>(func: T, wait: number): T => {
-  let timeout: NodeJS.Timeout;
+  let timeout: ReturnType<typeof setTimeout>;
   return ((...args: any[]) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
