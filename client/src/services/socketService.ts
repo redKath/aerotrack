@@ -37,6 +37,17 @@ export interface FlightError {
   timestamp: number;
 }
 
+// Safe way to get environment variables
+const getServerUrl = (): string => {
+  // Check if we're in a Vite environment
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+  }
+  
+  // Fallback for other environments
+  return 'http://localhost:3000';
+};
+
 export class SocketService {
   private socket: Socket | null = null;
   private reconnectAttempts = 0;
@@ -47,9 +58,8 @@ export class SocketService {
       return this.socket;
     }
 
-    // Use environment variable for production, fallback to localhost for dev
-    const defaultUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
-    const url = serverUrl || defaultUrl;
+    // Use provided URL or get from environment
+    const url = serverUrl || getServerUrl();
 
     console.log('🔌 Connecting to server:', url);
 
