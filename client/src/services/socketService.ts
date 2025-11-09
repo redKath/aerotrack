@@ -42,16 +42,23 @@ export class SocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
 
-  connect(serverUrl: string = 'http://localhost:3000'): Socket {
+  connect(serverUrl?: string): Socket {
     if (this.socket?.connected) {
       return this.socket;
     }
 
-    this.socket = io(serverUrl, {
+    // Use environment variable for production, fallback to localhost for dev
+    const defaultUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+    const url = serverUrl || defaultUrl;
+
+    console.log('🔌 Connecting to server:', url);
+
+    this.socket = io(url, {
       transports: ['websocket', 'polling'],
       upgrade: true,
       rememberUpgrade: true,
       timeout: 10000,
+      forceNew: true,
     });
 
     this.setupEventListeners();
