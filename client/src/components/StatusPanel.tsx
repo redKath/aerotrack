@@ -7,7 +7,16 @@ interface StatusPanelProps {
   isLoading: boolean;
 }
 
+// Safe way to get environment info
+const getEnvironmentInfo = () => {
+  const isDev = import.meta.env?.DEV || process.env.NODE_ENV === 'development';
+  const serverUrl = import.meta.env?.VITE_SERVER_URL || 'localhost:3000';
+  return { isDev, serverUrl };
+};
+
 export const StatusPanel: React.FC<StatusPanelProps> = ({ stats, error, isLoading }) => {
+  const { isDev, serverUrl } = getEnvironmentInfo();
+
   const formatLastUpdate = (timestamp: number | null): string => {
     if (!timestamp) return 'Never';
     const now = Date.now();
@@ -28,6 +37,13 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({ stats, error, isLoadin
             {stats.isConnected ? 'Connected' : 'Disconnected'}
           </span>
         </div>
+
+        {/* Show server URL in development */}
+        {isDev && (
+          <div className="text-xs text-gray-500 mb-2 break-all">
+            Server: {serverUrl}
+          </div>
+        )}
 
         {/* Loading State */}
         {isLoading && (
