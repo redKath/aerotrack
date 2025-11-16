@@ -24,6 +24,7 @@
 - **📱 Mobile Responsive**: Optimized experience across all devices
 - **🎯 Smart Filtering**: Viewport-based flight filtering for optimal performance
 - **📊 Flight Categories**: Visual distinction by aircraft type (Light, Heavy, Commercial)
+- **🔍 Flight Search**: Search for specific flights by callsign (e.g., "UAL123") to pan and highlight on the map
 - **🔍 Detailed Information**: Comprehensive flight data including:
   - Aircraft position (latitude, longitude, altitude)
   - Speed and heading information
@@ -34,6 +35,7 @@
   - Icon caching and viewport culling
   - Throttled updates to prevent lag
 - **🎨 Professional UI**: Clean, aviation-inspired design with status indicators
+
 
 ## 🛠️ Tech Stack
 
