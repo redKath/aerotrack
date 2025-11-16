@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import type { FlightStats } from '../hooks/useFlightData';
 
 interface StatusPanelProps {
   stats: FlightStats;
   error: string | null;
   isLoading: boolean;
+  onFlightSearch: (callsign: string) => void;
 }
 
 // Safe way to get environment info
@@ -14,8 +15,20 @@ const getEnvironmentInfo = () => {
   return { isDev, serverUrl };
 };
 
-export const StatusPanel: React.FC<StatusPanelProps> = ({ stats, error, isLoading }) => {
+export const StatusPanel: React.FC<StatusPanelProps> = ({ stats, error, isLoading, onFlightSearch }) => {
   const { isDev, serverUrl } = getEnvironmentInfo();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  const handleSearch = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim().length < 2) {
+      setSearchError('Please enter at least 2 characters.');
+      return;
+    }
+    setSearchError(null);
+    onFlightSearch(searchQuery.trim().toUpperCase());
+  }, [searchQuery, onFlightSearch]);
 
   const formatLastUpdate = (timestamp: number | null): string => {
     if (!timestamp) return 'Never';
@@ -30,6 +43,32 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({ stats, error, isLoadin
   return (
     <div className="absolute top-2 left-2 md:top-4 md:left-4 z-40 max-w-[calc(100vw-1rem)] md:max-w-none">
       <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 md:p-4 min-w-48 md:min-w-64">
+
+        <form onSubmit={handleSearch} className="mb-3">
+          <label htmlFor="flight-search" className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
+            Search Flight (e.g., UAL123)
+          </label>
+          <div className="flex space-x-2">
+            <input
+              id="flight-search"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Enter callsign..."
+              className="flex-1 px-2 py-1 text-xs md:text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              maxLength={10}
+            />
+            <button
+              type="submit"
+              className="px-3 py-1 bg-blue-600 text-white text-xs md:text-sm rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Search
+            </button>
+          </div>
+          {searchError && (
+            <p className="text-xs text-red-600 mt-1">{searchError}</p>
+          )}
+        </form>
         {/* Connection Status */}
         <div className="flex items-center space-x-2 mb-2 md:mb-3">
           <div className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full ${stats.isConnected ? 'bg-green-500 connection-indicator' : 'bg-red-500'}`}></div>
