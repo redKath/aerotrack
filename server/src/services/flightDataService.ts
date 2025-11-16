@@ -172,38 +172,6 @@ export class FlightDataService {
     }
   }
 
-  public static processFlightData(rawData: any): ProcessedFlightData[] {
-    if (!rawData || !rawData.states || !Array.isArray(rawData.states)) {
-      return [];
-    }
-
-    return rawData.states
-      .filter((state: any[]) => {
-        // Filter out flights without position data
-        return state[6] !== null && state[5] !== null; // longitude and latitude
-      })
-      .map((state: any[]): ProcessedFlightData => {
-        return {
-          icao24: state[0] || '',
-          callsign: (state[1] || '').trim() || 'Unknown',
-          originCountry: state[2] || 'Unknown',
-          position: (state[6] !== null && state[5] !== null) ? {
-            latitude: state[6],
-            longitude: state[5],
-            altitude: state[7] || 0, // baro_altitude
-          } : null,
-          velocity: {
-            speed: state[9] || 0, // velocity
-            heading: state[10] || 0, // true_track
-            verticalRate: state[11] || 0, // vertical_rate
-          },
-          onGround: state[8] || false,
-          lastUpdate: state[4] || Date.now() / 1000,
-          category: FlightDataService.getAircraftCategory(state[17] || 0),
-        };
-      });
-  }
-
   // Update the private method to use the static one
   private processFlightData(rawData: any): ProcessedFlightData[] {
     return FlightDataService.processFlightData(rawData);
