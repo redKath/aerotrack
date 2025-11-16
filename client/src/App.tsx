@@ -1,13 +1,13 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
 import type { LatLngBounds } from 'leaflet';
-import { FlightMarker } from './components/FlightMarker';
+import 'leaflet/dist/leaflet.css';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
+import './App.css';
 import { FlightInfoPanel } from './components/FlightInfoPanel';
+import { FlightMarker } from './components/FlightMarker';
 import { StatusPanel } from './components/StatusPanel';
 import { useFlightData } from './hooks/useFlightData';
 import type { FlightData } from './services/socketService';
-import 'leaflet/dist/leaflet.css';
-import './App.css';
 
 // Map bounds change handler component
 const MapBoundsHandler: React.FC<{ onBoundsChange: (bounds: LatLngBounds) => void }> = ({ onBoundsChange }) => {
@@ -27,6 +27,8 @@ const App: React.FC = () => {
   const [selectedFlight, setSelectedFlight] = useState<FlightData | null>(null);
   const [mapBounds, setMapBounds] = useState<LatLngBounds | null>(null);
   const { flights, stats, error, isLoading, updateBounds } = useFlightData();
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const mapRef = useRef<Map | null>(null);
 
   // Handle map bounds changes with debouncing
   const handleBoundsChange = useCallback(
@@ -92,6 +94,19 @@ const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, []);
 
+  const handleFlightSearch = useCallback((callsign: string) => {
+    const foundFlight = flights.find(flight => flight.callsign.toUpperCase() === callsign);
+    console.log({foundFlight})
+    if (foundFlight && foundFlight.position) {
+      setSelectedFlight(foundFlight);
+      // Pan and zoom to the flight's position
+      mapRef.current?.flyTo([foundFlight.position.latitude, foundFlight.position.longitude], 10);
+      setSearchError(null);
+    } else {
+      setSearchError('Flight not found or no position data available.');
+    }
+  }, [flights]);
+
   return (
     <div className="relative w-full h-full overflow-hidden">
       {/* Main Map */}
@@ -106,6 +121,7 @@ const App: React.FC = () => {
         keyboard={true}
         dragging={true}
         preferCanvas={true}
+        ref={mapRef}
       >
         {/* Map Tiles */}
         <TileLayer
@@ -134,8 +150,9 @@ const App: React.FC = () => {
           ...stats,
           totalFlights: flights.length,
         }}
-        error={error}
+        error={error || searchError}
         isLoading={isLoading}
+        onFlightSearch={handleFlightSearch}
       />
 
       {/* Flight Info Panel */}
