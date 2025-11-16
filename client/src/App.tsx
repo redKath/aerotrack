@@ -112,7 +112,7 @@ const App: React.FC = () => {
       {/* Main Map */}
       <MapContainer
         center={[20.0, 0.0]}
-        zoom={3}
+        zoom={1}
         className="w-full h-full"
         zoomControl={true}
         scrollWheelZoom={true}
@@ -122,12 +122,16 @@ const App: React.FC = () => {
         dragging={true}
         preferCanvas={true}
         ref={mapRef}
+        maxBounds={[[-90, -180], [90, 180]]}
+        maxBoundsViscosity={1.0}
+        minZoom={2.5}
       >
         {/* Map Tiles */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
+          noWrap={true}
         />
 
         {/* Bounds change handler */}
