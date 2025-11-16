@@ -1,4 +1,4 @@
-import type { LatLngBounds } from 'leaflet';
+import type { LatLngBounds, Map } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
