@@ -135,7 +135,7 @@ function processFlightData(rawData: any): any[] {
     .map((state: any[]) => {
       return {
         icao24: state[0] || '',
-        callsign: (state[1] || '').trim() || 'Unknown',
+        callsign: (state[1] || '').trim().toUpperCase() || 'Unknown', // Normalize to uppercase and trim
         originCountry: state[2] || 'Unknown',
         position: (state[6] !== null && state[5] !== null) ? {
           latitude: state[6],
