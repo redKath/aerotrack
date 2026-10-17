@@ -172,12 +172,10 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({ stats, dataSource, sea
             </span>
           </div>
 
-          {(stats.isConnected || dataSource.origin === 'browser') && (
+          {stats.isConnected && (
             <div className="flex items-center justify-between">
               <span className="text-xs md:text-sm text-gray-600">Source:</span>
-              <span className="text-xs text-gray-500">
-                {dataSource.origin === 'browser' ? 'OpenSky (direct)' : 'OpenSky'}
-              </span>
+              <span className="text-xs text-gray-500">OpenSky</span>
             </div>
           )}
         </div>
