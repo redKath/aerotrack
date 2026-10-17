@@ -1,10 +1,11 @@
 import type { DataStatus, FlightData } from './socketService';
 
-// Anonymous, browser-side access to the OpenSky public API. Used as a fallback when
-// the backend can't reach OpenSky (it blocks cloud hosting IPs). No credentials here:
-// requests come from the visitor's own IP and count against their anonymous quota.
-const OPENSKY_API_URL = 'https://opensky-network.org/api';
-const REQUEST_TIMEOUT = 10000;
+// Anonymous access to the OpenSky public API, used as a fallback when the backend
+// can't reach OpenSky. OpenSky's CORS policy only allows its own origin, so requests go
+// through a same-origin /opensky proxy (vercel.json rewrite in production, Vite proxy
+// in dev). No credentials here.
+const OPENSKY_API_URL = '/opensky';
+const REQUEST_TIMEOUT = 30000; // large (zoomed-out) anonymous queries can be slow
 
 export interface Bounds {
   lamin: number;
@@ -14,8 +15,8 @@ export interface Bounds {
 }
 
 export class DirectFetchError extends Error {
-  constructor(public readonly status: Exclude<DataStatus, 'ok' | 'pending'>) {
-    super(`OpenSky direct fetch failed: ${status}`);
+  constructor(public readonly status: Exclude<DataStatus, 'ok' | 'pending'>, reason?: string) {
+    super(reason ? `${status} (${reason})` : status);
   }
 }
 
@@ -72,15 +73,17 @@ export const fetchFlightsDirect = async (bounds: Bounds | null): Promise<FlightD
   let response: Response;
   try {
     response = await fetch(url, { signal: controller.signal });
-  } catch {
-    throw new DirectFetchError('upstream_unavailable');
+  } catch (error) {
+    // Network error, CORS rejection or timeout (abort)
+    const reason = controller.signal.aborted ? 'timed out' : error instanceof Error ? error.message : 'network error';
+    throw new DirectFetchError('upstream_unavailable', reason);
   } finally {
     clearTimeout(timeout);
   }
 
   if (response.status === 429) throw new DirectFetchError('rate_limited');
   if (response.status === 401 || response.status === 403) throw new DirectFetchError('auth_failed');
-  if (!response.ok) throw new DirectFetchError('upstream_unavailable');
+  if (!response.ok) throw new DirectFetchError('upstream_unavailable', `HTTP ${response.status}`);
 
   const data = await response.json();
   return processStates(data?.states);

@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/opensky/:path*", "destination": "https://opensky-network.org/api/:path*" }
+  ]
+}

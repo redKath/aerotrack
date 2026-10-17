@@ -23,7 +23,7 @@ interface DirectState {
   nextRetryAt: number | null;
 }
 
-// Browser fallback: anonymous OpenSky quota is ~400 credits/day per visitor (1-4 per request)
+// Browser fallback via the /opensky proxy: anonymous quota (~400 credits/day, 1-4 per request) is shared by all visitors
 const DIRECT_POLL_INTERVAL = 30000;
 const DIRECT_MAX_BACKOFF = 5 * 60 * 1000;
 const DIRECT_MIN_GAP = 10000; // minimum time between direct fetches triggered by map moves
@@ -225,6 +225,7 @@ export const useFlightData = (serverUrl?: string) => {
         failures++;
         directOkRef.current = false;
         const status = error instanceof DirectFetchError ? error.status : 'upstream_unavailable';
+        console.warn('Direct OpenSky fetch failed:', status, error instanceof Error ? error.message : error);
         delay = status === 'rate_limited'
           ? DIRECT_MAX_BACKOFF
           : Math.min(DIRECT_POLL_INTERVAL * 2 ** (failures - 1), DIRECT_MAX_BACKOFF);
