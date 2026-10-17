@@ -1,12 +1,40 @@
-import React, { useState, useCallback } from 'react';
-import type { FlightStats } from '../hooks/useFlightData';
+import React, { useState, useCallback, useEffect } from 'react';
+import type { DataSourceState, FlightStats } from '../hooks/useFlightData';
+import type { DataStatus } from '../services/socketService';
 
 interface StatusPanelProps {
   stats: FlightStats;
-  error: string | null;
+  dataSource: DataSourceState;
+  searchResultError: string | null;
   isLoading: boolean;
   onFlightSearch: (callsign: string) => void;
 }
+
+const DEGRADED_MESSAGES: Partial<Record<DataStatus, string>> = {
+  upstream_unavailable: 'Live flight data is temporarily unavailable from OpenSky. Retrying automatically.',
+  rate_limited: 'Live data is paused briefly due to API limits. Retrying shortly.',
+  auth_failed: 'Live data source is being reconfigured. Retrying automatically.',
+};
+
+const getDataLabel = ({ status, stale }: DataSourceState): { text: string; dotClass: string } => {
+  switch (status) {
+    case 'ok':
+      return stale ? { text: 'Last known', dotClass: 'bg-amber-500' } : { text: 'Live', dotClass: 'bg-green-500' };
+    case 'pending':
+      return { text: 'Waiting', dotClass: 'bg-gray-400' };
+    case 'rate_limited':
+      return { text: 'Paused', dotClass: 'bg-amber-500' };
+    default:
+      return { text: 'Unavailable', dotClass: 'bg-amber-500' };
+  }
+};
+
+const formatAgo = (timestamp: number, now: number): string => {
+  const minutes = Math.floor(Math.max(0, now - timestamp) / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  return `${Math.floor(minutes / 60)} h ago`;
+};
 
 // Safe way to get environment info
 const getEnvironmentInfo = () => {
@@ -15,10 +43,17 @@ const getEnvironmentInfo = () => {
   return { isDev, serverUrl };
 };
 
-export const StatusPanel: React.FC<StatusPanelProps> = ({ stats, error, isLoading, onFlightSearch }) => {
+export const StatusPanel: React.FC<StatusPanelProps> = ({ stats, dataSource, searchResultError, isLoading, onFlightSearch }) => {
   const { isDev, serverUrl } = getEnvironmentInfo();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  // Tick for the retry countdown and relative "updated" times
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -31,14 +66,20 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({ stats, error, isLoadin
   }, [searchQuery, onFlightSearch]);
 
   const formatLastUpdate = (timestamp: number | null): string => {
-    if (!timestamp) return 'Never';
-    const now = Date.now();
+    if (!timestamp) return 'Waiting for live data…';
     const diff = now - timestamp;
     
     if (diff < 60000) return 'Just now';
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
     return new Date(timestamp).toLocaleTimeString();
   };
+
+  const dataLabel = getDataLabel(dataSource);
+  const degradedMessage = DEGRADED_MESSAGES[dataSource.status];
+  const showStaleLabel = dataSource.stale && stats.totalFlights > 0;
+  const retryInSec = dataSource.nextRetryAt !== null
+    ? Math.max(0, Math.ceil((dataSource.nextRetryAt - now) / 1000))
+    : null;
 
   return (
     <div className="absolute top-2 left-2 md:top-4 md:left-4 z-40 max-w-[calc(100vw-1rem)] md:max-w-none">
@@ -65,22 +106,28 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({ stats, error, isLoadin
               Search
             </button>
           </div>
-          {searchError && (
-            <p className="text-xs text-red-600 mt-1">{searchError}</p>
+          {(searchError || searchResultError) && (
+            <p className="text-xs text-red-600 mt-1">{searchError || searchResultError}</p>
           )}
         </form>
-        {/* Connection Status */}
-        <div className="flex items-center space-x-2 mb-2 md:mb-3">
+        {/* Connection Status (Socket.IO only) */}
+        <div className="flex items-center space-x-2 mb-1">
           <div className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full ${stats.isConnected ? 'bg-green-500 connection-indicator' : 'bg-red-500'}`}></div>
           <span className="text-xs md:text-sm font-medium">
-            {stats.isConnected ? 'Connected' : 'Disconnected'}
+            Server: {stats.isConnected ? 'Connected' : 'Disconnected'}
           </span>
+        </div>
+
+        {/* Data Source Status (OpenSky) */}
+        <div className="flex items-center space-x-2 mb-2 md:mb-3">
+          <div className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full ${dataLabel.dotClass}`}></div>
+          <span className="text-xs md:text-sm font-medium">Data: {dataLabel.text}</span>
         </div>
 
         {/* Show server URL in development */}
         {isDev && (
           <div className="text-xs text-gray-500 mb-2 break-all">
-            Server: {serverUrl}
+            Endpoint: {serverUrl}
           </div>
         )}
 
@@ -92,16 +139,20 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({ stats, error, isLoadin
           </div>
         )}
 
-        {/* Error State */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-2 md:p-3 mb-2 md:mb-3">
-            <div className="flex items-center space-x-2">
-              <svg className="w-3 h-3 md:w-4 md:h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <span className="text-xs md:text-sm text-red-700 font-medium">Error</span>
-            </div>
-            <p className="text-xs text-red-600 mt-1 break-words">{error}</p>
+        {/* Degraded data source notice (non-blocking) */}
+        {degradedMessage && (
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-2 mb-2 md:mb-3 max-w-xs" role="status">
+            <p className="text-xs text-amber-800 break-words">{degradedMessage}</p>
+            {showStaleLabel && stats.lastUpdate && (
+              <p className="text-xs text-amber-700 mt-1">
+                Showing last known positions · updated {formatAgo(stats.lastUpdate, now)}
+              </p>
+            )}
+            {retryInSec !== null && (
+              <p className="text-xs text-amber-700 mt-1">
+                {retryInSec > 0 ? `Retrying in ${retryInSec}s` : 'Retrying now…'}
+              </p>
+            )}
           </div>
         )}
 

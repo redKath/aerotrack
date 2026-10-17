@@ -3,6 +3,7 @@ import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import config from '../config/config';
+import { UpstreamError, toSafeError } from '../utils/upstreamError';
 
 // Extend Request interface
 declare global {
@@ -84,8 +85,8 @@ class AuthManager {
       console.log(`OpenSky token acquired successfully, expires at: ${new Date(expiresAt).toISOString()}`);
       return access_token;
     } catch (error) {
-      console.error('Failed to obtain OpenSky access token:', error);
-      throw new Error('Failed to obtain OpenSky access token');
+      console.error('OpenSky token error:', toSafeError(error));
+      throw UpstreamError.from(error, 'Failed to obtain OpenSky access token');
     }
   }
 
@@ -146,7 +147,7 @@ export const openSkyAuth = async (req: Request, res: Response, next: NextFunctio
     req.openSkyToken = token;
     next();
   } catch (error) {
-    console.error('OpenSky authentication failed:', error);
+    console.error('OpenSky authentication failed:', toSafeError(error));
     res.status(503).json({
       error: 'Authentication service unavailable',
       message: 'Failed to obtain OpenSky access token',

@@ -26,7 +26,7 @@ const MapBoundsHandler: React.FC<{ onBoundsChange: (bounds: LatLngBounds) => voi
 const App: React.FC = () => {
   const [selectedFlight, setSelectedFlight] = useState<FlightData | null>(null);
   const [mapBounds, setMapBounds] = useState<LatLngBounds | null>(null);
-  const { flights, stats, error, isLoading, updateBounds } = useFlightData();
+  const { flights, stats, dataSource, isLoading, updateBounds } = useFlightData();
   const [searchError, setSearchError] = useState<string | null>(null);
   const mapRef = useRef<Map | null>(null);
 
@@ -154,7 +154,8 @@ const App: React.FC = () => {
           ...stats,
           totalFlights: flights.length,
         }}
-        error={error || searchError}
+        dataSource={dataSource}
+        searchResultError={searchError}
         isLoading={isLoading}
         onFlightSearch={handleFlightSearch}
       />

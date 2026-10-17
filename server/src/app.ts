@@ -34,6 +34,11 @@ app.use(errorHandler);
 // Initialize Flight Data Service
 const flightDataService = new FlightDataService(io);
 
+// Lightweight health check: server status plus last known OpenSky status (no secrets)
+app.get('/health', (req, res) => {
+  res.json(flightDataService.getHealth());
+});
+
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);

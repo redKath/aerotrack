@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import axios from 'axios';
 import { getOpenSkyAuthHeader } from '../middlewares/authMiddleware';
 import config from '../config/config';
+import { classifyUpstreamError, toSafeError } from '../utils/upstreamError';
 
 const OPENSKY_API_URL = config.openSky.apiBaseUrl;
 
@@ -24,7 +25,7 @@ export const getOpenSkyStates = async (req: Request, res: Response): Promise<voi
     
     const response = await axios.get(url, {
       headers: getOpenSkyAuthHeader(req.openSkyToken),
-      timeout: 30000,
+      timeout: 10000,
     });
 
     res.json({
@@ -33,10 +34,10 @@ export const getOpenSkyStates = async (req: Request, res: Response): Promise<voi
       timestamp: Date.now(),
     });
   } catch (error) {
-    console.error('Error fetching OpenSky states:', error);
-    res.status(500).json({ 
+    console.error('Error fetching OpenSky states:', toSafeError(error));
+    res.status(502).json({ 
       error: 'Failed to fetch aircraft states',
-      message: axios.isAxiosError(error) ? error.message : 'Unknown error'
+      status: classifyUpstreamError(error),
     });
   }
 };
@@ -64,7 +65,7 @@ export const getOpenSkyFlightsByAircraft = async (req: Request, res: Response): 
     
     const response = await axios.get(url, {
       headers: getOpenSkyAuthHeader(req.openSkyToken),
-      timeout: 30000,
+      timeout: 10000,
     });
 
     res.json({
@@ -73,10 +74,10 @@ export const getOpenSkyFlightsByAircraft = async (req: Request, res: Response): 
       timestamp: Date.now(),
     });
   } catch (error) {
-    console.error('Error fetching OpenSky flights:', error);
-    res.status(500).json({ 
+    console.error('Error fetching OpenSky flights:', toSafeError(error));
+    res.status(502).json({ 
       error: 'Failed to fetch flight data',
-      message: axios.isAxiosError(error) ? error.message : 'Unknown error'
+      status: classifyUpstreamError(error),
     });
   }
 };
@@ -101,7 +102,7 @@ export const getProcessedFlights = async (req: Request, res: Response): Promise<
     
     const response = await axios.get(url, {
       headers: getOpenSkyAuthHeader(req.openSkyToken),
-      timeout: 30000,
+      timeout: 10000,
     });
 
     // Process the data similar to the real-time service
@@ -115,10 +116,10 @@ export const getProcessedFlights = async (req: Request, res: Response): Promise<
       bounds: { lamin, lomin, lamax, lomax }
     });
   } catch (error) {
-    console.error('Error fetching processed flights:', error);
-    res.status(500).json({ 
+    console.error('Error fetching processed flights:', toSafeError(error));
+    res.status(502).json({ 
       error: 'Failed to fetch flight data',
-      message: axios.isAxiosError(error) ? error.message : 'Unknown error'
+      status: classifyUpstreamError(error),
     });
   }
 };

@@ -19,22 +19,21 @@ export interface FlightData {
   category: string;
 }
 
+// Status of the OpenSky data source, reported by the server ('pending' = no fetch completed yet)
+export type DataStatus = 'ok' | 'upstream_unavailable' | 'auth_failed' | 'rate_limited' | 'pending';
+
 export interface FlightUpdateData {
-  flights: FlightData[];
-  timestamp: number;
-  totalFlights: number;
+  status: DataStatus;
+  flights: FlightData[];          // live or last-known
+  lastUpdated: string | null;     // ISO time of the data shown
+  stale: boolean;
+  nextRetryInSec?: number;
   bounds?: {
     lamin: number;
     lomin: number;
     lamax: number;
     lomax: number;
-  };
-}
-
-export interface FlightError {
-  error: string;
-  message: string;
-  timestamp: number;
+  } | null;
 }
 
 // Safe way to get environment variables
@@ -116,10 +115,6 @@ export class SocketService {
 
   onFlightUpdate(callback: (data: FlightUpdateData) => void): void {
     this.socket?.on('flightUpdate', callback);
-  }
-
-  onFlightError(callback: (error: FlightError) => void): void {
-    this.socket?.on('flightError', callback);
   }
 
   getConnectionStatus(): boolean {
